@@ -273,13 +273,104 @@ public class QuerydslBasicTest {
         assertThat(teamB.get(member.age.avg())).isEqualTo(35);
 
     }
-    
+
+    /**
+     * 팀 A에 소속된 모든 회원
+     */
+    @Test
+    public void join() {
+        List<Member> teamA = jpaQueryFactory
+                .selectFrom(member)
+                //.join(member.team, team)
+                .leftJoin(member.team, team)
+                .where(team.name.eq("teamA"))
+                .fetch();
+
+        for (Member member1 : teamA) {
+            System.out.println(member1);
+        }
+
+        assertThat(teamA.size()).isEqualTo(2);
+
+        assertThat(teamA)
+                .extracting("username")
+                .containsExactly("member1","member2");
+
+    }
 
 
+    /**
+     *
+     * 세타 조인
+     * 회원의 이름이 팀 이름과 같은 회원 조회
+     * CROSS JOIN 같음
+     */
+    @Test
+    public void theta_join() {
+        em.persist(new Member("teamA"));
+        em.persist(new Member("teamB"));
+
+        List<Member> fetch = jpaQueryFactory
+                .select(member)
+                .from(member, team)
+                .where(member.username.eq(team.name))
+                .fetch();
+
+        // 외부 조인 불가능 : 최신버전에 들어가면서 이제 가능해짐 (2.1 부터 사용가능해짐)
+        
+        assertThat(fetch)
+                .extracting("username")
+                .containsExactly("teamA","teamB");
+
+    }
 
 
+    /**
+     * 회원과 팀을 조인하면서 팀 이름이 teamA 인 팀만 조인 , 회원은 모두 조회
+     * JPQL : select m , t from Member m left join m.team t on t.name = 'teamA'
+     *
+     */
+    @Test
+    public void join_on_filtering() {
+
+        List<Tuple> result = jpaQueryFactory
+                .select(member, team)
+                .from(member)
+                //.leftJoin(member.team, team)
+                .join(member.team, team)  //기본이 inner join 이다.
+                .on(team.name.eq("teamA"))
+                .fetch();
+
+        for (Tuple tuple : result) {
+            System.out.println(tuple);
+        }
+    }
 
 
+    /**
+     * 연관관계가 없는 엔티티 외부 조인
+     * 회원의 이름과 팀의 이름이 같은 대상 외부 조인
+     *
+     */
+    @Test
+    public void join_on_no_relation() {
+
+        em.persist(new Member("teamA"));
+        em.persist(new Member("teamB"));
+        em.persist(new Member("teamC"));
+
+        List<Tuple> result = jpaQueryFactory
+                .select(member, team)
+                .from(member)
+                .leftJoin(team)
+                .on(member.username.eq(team.name))         //막조인이다.
+                .fetch();
+
+        for (Tuple tuple : result) {
+            System.out.println(tuple);
+        }
+
+    }
 
 
 
