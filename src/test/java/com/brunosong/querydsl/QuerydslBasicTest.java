@@ -15,6 +15,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceUnit;
 
 import java.util.List;
 
@@ -369,6 +371,67 @@ public class QuerydslBasicTest {
         for (Tuple tuple : result) {
             System.out.println(tuple);
         }
+
+    }
+
+    @PersistenceUnit
+    EntityManagerFactory emf;
+
+    @Test
+    public void fetchJoinNo() {
+
+        em.flush();
+        em.clear();
+
+        Member findMember = jpaQueryFactory
+                .selectFrom(member)
+                .where(member.username.eq("member1"))
+                .fetchOne();
+
+        boolean loaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam());   // 로드가 되었냐 안되었냐를 확인하는 메서드
+        assertThat(loaded).as("패치조인미적용").isFalse();
+
+    }
+
+
+
+    @Test
+    public void fetchJoinUse() {
+
+        em.flush();
+        em.clear();
+
+        Member findMember = jpaQueryFactory
+                .selectFrom(member)
+                .join(member.team, team).fetchJoin()
+                .where(member.username.eq("member1"))
+                .fetchOne();
+
+        boolean loaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam());   // 로드가 되었냐 안되었냐를 확인하는 메서드
+        assertThat(loaded).as("패치조인 적용").isTrue();
+
+        System.out.println(findMember.getTeam().getName());  // 셀렉트가 한번 더 안나감
+
+    }
+
+
+
+    @Test
+    public void fetchJoinUse_궁금해서() {
+
+        em.flush();
+        em.clear();
+
+        Member findMember = jpaQueryFactory
+                .selectFrom(member)
+                .join(member.team, team)
+                .where(member.username.eq("member1"))
+                .fetchOne();
+
+        boolean loaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam());   // 로드가 되었냐 안되었냐를 확인하는 메서드
+        assertThat(loaded).as("패치조인 적용").isFalse();
+
+        System.out.println(findMember.getTeam().getName());  // 샐럭트가 한번더 나감
 
     }
 
