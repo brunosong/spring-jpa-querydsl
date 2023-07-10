@@ -158,6 +158,37 @@ public class QuerydslBasicTest {
     }
 
 
+    /*
+    *
+    * 회원 정렬 순서
+    * 1. 회원 나이 내림차순 ( desc )
+    * 2. 회원 이름 올림차순 ( asc )
+    * 단 2에서 회원 이름이 없으면 마지막에 출력 (nulls last)
+    * */
+
+    @Test
+    public void sort() {
+        em.persist(new Member(null , 100));
+        em.persist(new Member("member5" , 100));
+        em.persist(new Member("member6" , 100));
+
+        List<Member> fetch = jpaQueryFactory.selectFrom(member)
+                .where(member.age.eq(100))
+                .orderBy(member.age.desc(), member.username.asc().nullsLast())
+                //.orderBy(member.age.desc(), member.username.asc().nullsFirst())  member1.username asc nulls last ,  member1.username asc nulls first 두개가 존재한다.
+                .fetch();
+
+        for (Member fetch1 : fetch) {
+            System.out.println("memberName : " + fetch1.getUsername());
+        }
+
+        assertThat(fetch.get(0).getUsername()).isEqualTo("member5");
+        assertThat(fetch.get(1).getUsername()).isEqualTo("member6");
+        assertThat(fetch.get(2).getUsername()).isNull();
+
+    }
+
+
 
 
 
