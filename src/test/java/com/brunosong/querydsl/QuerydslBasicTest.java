@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 
+import static com.brunosong.querydsl.entity.QMember.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -68,7 +69,7 @@ public class QuerydslBasicTest {
     void startQuerydsl() {
 
         JPAQueryFactory jpaQueryFactory = new JPAQueryFactory(em);
-        QMember m = new QMember("m");
+        QMember m = new QMember("m1");    // 같은 테이블을 조인해야 할경우가 생길수 있으니 m1 , m2로 해서 설정해 주면 된다.
 
         Member findMember = jpaQueryFactory
                 .select(m)
@@ -83,14 +84,11 @@ public class QuerydslBasicTest {
 
     @Test
     void startQuerydsl2() {
-
-
-        QMember m = new QMember("m");
-
+        //Querydsl은 결국에는 JPQL로 변환되어서 나간다고 생각하면 된다.
         Member findMember = jpaQueryFactory
-                .select(m)
-                .from(m)
-                .where(m.username.eq("member1"))
+                .select(member)
+                .from(member)
+                .where(member.username.eq("member1"))
                 .fetchOne();
 
         assertThat(findMember.getUsername()).isEqualTo("member1");
