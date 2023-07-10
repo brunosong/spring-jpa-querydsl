@@ -6,12 +6,14 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Commit;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 
 @SpringBootTest
 @Transactional
+@Commit         //디비에 데이터가 어떻게 들어가졌는지 볼때 사용한다. (실제로 눈으로 보고 싶을때)
 class QuerydslApplicationTests {
 
     @Autowired
@@ -31,6 +33,8 @@ class QuerydslApplicationTests {
 
         Hello result = query.selectFrom(qHello)
                 .fetchOne();
+
+
 
 
 
