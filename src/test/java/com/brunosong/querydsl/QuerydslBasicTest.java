@@ -3,6 +3,7 @@ package com.brunosong.querydsl;
 import com.brunosong.querydsl.entity.Member;
 import com.brunosong.querydsl.entity.QMember;
 import com.brunosong.querydsl.entity.Team;
+import com.querydsl.core.QueryResults;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +13,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+
+import java.util.List;
 
 import static com.brunosong.querydsl.entity.QMember.*;
 import static org.assertj.core.api.Assertions.*;
@@ -121,6 +124,42 @@ public class QuerydslBasicTest {
 
         assertThat(findMember.getUsername()).isEqualTo("member1");
     }
+
+
+
+    @Test
+    void resultFetch() {
+
+        List<Member> fetch = jpaQueryFactory
+                                .selectFrom(member)
+                                .fetch();
+
+        Member fetchOne = jpaQueryFactory
+                .selectFrom(member)
+                .fetchOne();
+
+        Member fetchFirst = jpaQueryFactory
+                .selectFrom(member)
+                .fetchFirst();
+
+        QueryResults<Member> result = jpaQueryFactory
+                .selectFrom(member)
+                .fetchResults();        //쿼리가 두번 실행된다. 왜냐면 토탈 카운트를 가져와야 한다.
+
+        long total = result.getTotal();
+        List<Member> contents = result.getResults();
+
+        long totalCnt = jpaQueryFactory
+                .selectFrom(member)
+                .fetchCount();
+
+
+
+    }
+
+
+
+
 
 
 }
