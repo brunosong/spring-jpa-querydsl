@@ -96,4 +96,31 @@ public class QuerydslBasicTest {
     }
 
 
+
+    @Test
+    void search() {
+        Member findMember = jpaQueryFactory
+                .selectFrom(member)
+                .where(member.username.eq("member1")
+                        .and(member.age.eq(10)))
+                .fetchOne();
+
+        assertThat(findMember.getUsername()).isEqualTo("member1");
+    }
+
+
+    @Test
+    void searchAndParam() {
+        Member findMember = jpaQueryFactory
+                .selectFrom(member)
+                .where(
+                    member.username.eq("member1"),
+                    member.age.eq(10)
+                )   // AND 는 , 도 가능하다. AND만 있는경우 이경우를 더 선호한다. null 을 무시해준다. 동적쿼리때 설명해준다.
+                .fetchOne();
+
+        assertThat(findMember.getUsername()).isEqualTo("member1");
+    }
+
+
 }
