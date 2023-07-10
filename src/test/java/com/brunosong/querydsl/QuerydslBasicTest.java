@@ -190,6 +190,44 @@ public class QuerydslBasicTest {
 
 
 
+    @Test
+    public void paging1() {
+        List<Member> fetch = jpaQueryFactory.selectFrom(member)
+                .orderBy(member.username.desc())
+                .offset(0)  //몇개를 스킵하고 시작할꺼냐 묻는거임
+                .limit(2)
+                .fetch();
+
+        assertThat(fetch.size()).isEqualTo(2);
+
+    }
+
+
+    @Test
+    public void paging2() {
+        QueryResults<Member> queryResults = jpaQueryFactory.selectFrom(member)
+                .orderBy(member.username.desc())
+                .offset(0)  //몇개를 스킵하고 시작할꺼냐 묻는거임
+                .limit(2)
+                .fetchResults();
+
+
+
+        assertThat(queryResults.getTotal()).isEqualTo(4);
+        assertThat(queryResults.getLimit()).isEqualTo(2);
+        assertThat(queryResults.getOffset()).isEqualTo(0);
+
+        assertThat(queryResults.getResults().size()).isEqualTo(2);
+
+        //실무에서는 쓸수도 있고 못쓸수도 있다. 단순한 쿼리에서는 사용가능하나 복잡해지면 사용이 불가능 하다.
+    }
+
+
+
+
+
+
+
 
 
 
