@@ -6,6 +6,7 @@ import com.brunosong.querydsl.entity.QTeam;
 import com.brunosong.querydsl.entity.Team;
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +23,7 @@ import java.util.List;
 
 import static com.brunosong.querydsl.entity.QMember.*;
 import static com.brunosong.querydsl.entity.QTeam.*;
+import static com.querydsl.jpa.JPAExpressions.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -434,6 +436,149 @@ public class QuerydslBasicTest {
         System.out.println(findMember.getTeam().getName());  // 샐럭트가 한번더 나감
 
     }
+
+
+    /**
+     * 나이가 가장 많은 회원 조회
+     *
+     */
+    @Test
+    public void subQuery() {
+
+        //select * from member m where m.age = ( select max(subM.age) from member subM )
+        // 서브쿼리는 쿼리 안에 쿼리를 넣겠다는 거
+        QMember memberSub = new QMember("memberSub");
+
+        List<Member> members = jpaQueryFactory
+                .select(member)
+                .from(member)
+                .where(member.age.eq(
+                        select(memberSub.age.max())
+                                .from(memberSub)
+                ))
+                .fetch();
+
+
+        assertThat(members)
+                .extracting("age")
+                .containsExactly(40);
+
+
+    }
+
+
+
+    /**
+     * 나이가 평균 이상인 사람
+     *  select * from member m where m.age > (select avg(age) from member)
+     */
+    @Test
+    public void subQuery_goe() {
+        QMember subMember = new QMember("subMember");
+
+        List<Member> members = jpaQueryFactory
+                .select(member)
+                .from(member)
+                .where(member.age.goe(
+                        select(subMember.age.avg())
+                                .from(subMember)
+                )).fetch();
+
+
+        assertThat(members)
+                .extracting("age")
+                .containsExactly(30,40);
+
+
+    }
+
+
+    /**
+     * 서브쿼리 여러 건 처리, in 사용
+     */
+    @Test
+    public void subQueryIn() {
+
+        QMember subMember = new QMember("subMember");
+
+        List<Member> members = jpaQueryFactory
+                .select(member)
+                .from(member)
+                .where(member.age.in(
+                        select(subMember.age)
+                                .from(subMember)
+                                .where(subMember.age.gt(10))
+                ))
+                .fetch();
+
+        assertThat(members)
+                .extracting("age")
+                .containsExactly(20, 30, 40);
+
+    }
+
+    /*
+    *
+    * JPA는 FROM 절에서는 지원하지 않는다. (인라인뷰)
+    * 1. 서브쿼리를 join으로 변경한다. ( 가능한 상황도 불가능한 상황도 있다. )
+    * 2. 애플리케이션에서 쿼리를 2번 분리해서 실행한다. (상황에 따라 다르다 일반적으로는 2번 호출해도 크게 문제 되지 않는다.)
+    * 3. nativeSQL 을 사용한다.
+    *
+    * from 절에 서브쿼리를 사용하는 이유
+    *
+    * 개발자가 어떻게든 화면에 맞춰서 한방 쿼리로 짤려고 할라고 하니깐 프롬절에 서브쿼리가 많이 사용될수 있다.
+    * 하지만 이것을 피하기 위해서는 여러가지를 생각해볼수 있다.
+    * 1. 쿼리를 분리해서 여러번 호출한다.
+    *
+    *
+    * 현대적인 어플리케이션은 되도록이면 어플리케이션(비지니스) 로직에서 풀고 뷰는 프리젠테이션 로직에서 풀라고 하는 상황이다.
+    * - SQL은 데이터를 가져오는데 집중을 하고 뭔가 이쁘게 만들고 그러는것은 화면에서 해야 한다.
+    * - 디비는 데이터만 필터링 하고 그룹핑하고 가져오고 그정도 용도로 써야 한다.
+    * - 디비는 데이터를 퍼올리는 용도로만 사용해야 한다.
+    * - 각자 역활에 충실해질 필요가 있다. 내가 생각을 해도 대체적으로 디비에 부하가 생기지
+    * - 와스단에서 부하가 생기는 경우는 거의 없다고 본다.
+    * - 그리고 와스는 오토스케일링으로 빠르게 늘릴수 있다. 하지만 디비는 그렇지 않다. 한번 정해지면 정말 늘리기도 바꾸기도 힘들다.
+    *
+    *
+    * 
+    * 한방쿼리 미신 : 정말 잘되냐 ... 나도 고민이 많았다. 실시간 트래픽이 중요한 상황에서는 아까운데 요즘은 캐시로 발라서 쓰는데 
+    * 어드민은 복잡한데 그런곳에서는 쿼리를 여러번 나눠서 만드는게 좋은 선택이다 ( 내 선택이 틀리지 않았다 ) SQL AntiPatterns 이란 책에서 나왔음 (https://www.yes24.com/Product/Goods/5269099)
+    * 
+    * 정말 복잡한 수백줄에 쿼리는 여러개 나눠서 작성하는게 좋다
+    *
+    * 참고
+    *
+    * 프리젠테이션 로직이란 말 그래도 보여주기 위한 로직을 말한다. 즉 화면상의 디자인 구성을 위한 로직을 일컫는 말로써, 게시판에서의 표시하기 위한 for(or while)문 등의 사용이 여기에 해당한다.
+      반면에 비즈니스 로직이라는 것은 어떠한 특정한 값을 얻기 위해 데이터의 처리를 수행하는 응용프로그램의 일부를 말한다. 즉 원하는 값을 얻기 위해서 백엔드에서 일어나는 각종 처리를 일컫는 말이다.
+      JSP와 자바 빈즈를 사용하는 구조에서 일반적으로 JSP는 프리젠테이션 로직을 담당하고 자바 빈즈는 비즈니스 로직을 담당한다.
+    *
+    * */
+
+
+    @Test
+    public void selectSubQuery() {
+
+        QMember subMember = new QMember("subMember");
+
+        List<Tuple> fetch = jpaQueryFactory
+                .select(member.username,
+                        select(subMember.age.avg())
+                                .from(subMember))
+                .from(member)
+                .fetch();
+
+
+        for (Tuple tuple : fetch) {
+            System.out.println(tuple);
+        }
+
+
+    }
+
+
+
+
+
 
 
 
