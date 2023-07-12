@@ -6,11 +6,13 @@ import com.brunosong.querydsl.dto.UserDto;
 import com.brunosong.querydsl.entity.Member;
 import com.brunosong.querydsl.entity.QMember;
 import com.brunosong.querydsl.entity.Team;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +25,7 @@ import javax.persistence.TypedQuery;
 import java.util.List;
 
 import static com.brunosong.querydsl.entity.QMember.*;
+import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
@@ -193,7 +196,37 @@ public class QuerydslMiddleTest {
 
     }
 
+    @Test
+    public void 동적쿼리_BooleanBuilder() throws Exception {
 
+        String usernameParam = "member1";
+        Integer ageParam = null;
+
+        List<Member> result = searchMember1(usernameParam,ageParam);
+        assertThat(result.size()).isEqualTo(1);
+
+    }
+
+
+    private List<Member> searchMember1(String usernameCond, Integer ageCond) {
+
+        BooleanBuilder builder = new BooleanBuilder();
+
+        if( usernameCond != null) {
+            builder.and(member.username.eq(usernameCond));
+        }
+
+        if( ageCond != null) {
+            builder.and(member.age.eq(ageCond));
+        }
+
+        return jPAQueryFactory
+                .select(member)
+                .from(member)
+                .where( builder )
+                .fetch();
+
+    }
 
 
 
