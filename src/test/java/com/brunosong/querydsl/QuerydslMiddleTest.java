@@ -1,6 +1,7 @@
 package com.brunosong.querydsl;
 
 import com.brunosong.querydsl.dto.MemberDto;
+import com.brunosong.querydsl.dto.QMemberDto;
 import com.brunosong.querydsl.dto.UserDto;
 import com.brunosong.querydsl.entity.Member;
 import com.brunosong.querydsl.entity.QMember;
@@ -176,6 +177,21 @@ public class QuerydslMiddleTest {
 
     }
 
+
+
+    @Test
+    public void findDtoByQueryProjection() {
+        // 컴파일 시점에 오류를 잡아줘서 좋다. (컴파일 오류)
+        List<MemberDto> resultList = jPAQueryFactory
+                .select(new QMemberDto(member.username, member.age))
+                .from(member)
+                .fetch();
+
+        for (MemberDto memberDto : resultList) {
+            System.out.println(memberDto);
+        }
+
+    }
 
 
 
