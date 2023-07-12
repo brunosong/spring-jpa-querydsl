@@ -9,7 +9,9 @@ import com.brunosong.querydsl.entity.Team;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.assertj.core.api.Assertions;
@@ -207,7 +209,6 @@ public class QuerydslMiddleTest {
 
     }
 
-
     private List<Member> searchMember1(String usernameCond, Integer ageCond) {
 
         BooleanBuilder builder = new BooleanBuilder();
@@ -229,6 +230,33 @@ public class QuerydslMiddleTest {
     }
 
 
+    @Test
+    public void 동적쿼리_WhereParam() throws Exception {
+
+        String usernameParam = "member1";
+        Integer ageParam = 10;
+
+        List<Member> result = searchMember2(usernameParam,ageParam);
+        assertThat(result.size()).isEqualTo(1);
+
+    }
+
+    private List<Member> searchMember2(String usernameCond, Integer ageCond) {
+        return jPAQueryFactory
+                .select(member)
+                .from(member)
+                .where( usernameEq(usernameCond) , ageEq(ageCond) )
+                .fetch();
+    }
+
+    private Predicate ageEq(Integer ageCond) {
+        return ageCond == null ? null : member.age.eq(ageCond);
+    }
+
+    private BooleanExpression usernameEq(String usernameCond) {
+        //null 이 리턴이 되버리면 무시가 된다. 그래서 동적쿼리가 만들어 지는것이다.
+        return usernameCond == null ? null : member.username.eq(usernameCond);
+    }
 
 
 }
