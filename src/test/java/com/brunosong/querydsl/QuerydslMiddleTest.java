@@ -259,4 +259,65 @@ public class QuerydslMiddleTest {
     }
 
 
+    @Test
+    public void bulkUpdate() {
+
+        long count = jPAQueryFactory
+                .update(member)
+                .set(member.username, "비회원")
+                .where(member.age.lt(28))
+                .execute();
+
+        //영속성 컨텍스트 상태와 디비에 상태가 달라져 있다.
+        //영속성 컨텍스트에 값은 아직 member1 이 되어버린다.
+        //디비에서 셀렉트를 해도 영속성 컨텍스트에 값이 있으면 디비에서 가져온 값을 버린다.
+        /* 이렇게 가져오면 영속성 컨텍스트에 있는것으로 가지고 오게 되서 변경된 값을 가지고 오지 못한다. */
+        List<Member> memberResult = jPAQueryFactory
+                .selectFrom(member)
+                .fetch();
+
+        em.flush();
+        em.clear();
+
+
+
+
+        List<UserDto> resultList = jPAQueryFactory
+                                .select(Projections.fields(UserDto.class,
+                                        member.username.as("name"),
+                                        member.age))
+                                .from(member)
+                                .fetch();
+
+        for (UserDto user : resultList) {
+            System.out.println(user);
+        }
+
+    }
+
+
+    @Test
+    void bulkAdd(){
+
+        long count = jPAQueryFactory
+                .update(member)
+                .set(member.age, member.age.add(1))
+                .execute();
+
+    }
+
+
+    @Test
+    void bulkDelete(){
+
+        long execute = jPAQueryFactory
+                .delete(member)
+                .where(member.age.gt(18))
+                .execute();
+
+    }
+
+
+
+
 }
