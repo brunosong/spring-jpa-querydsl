@@ -1,5 +1,7 @@
 package com.brunosong.querydsl.repository;
 
+import com.brunosong.querydsl.dto.MemberSearchCondition;
+import com.brunosong.querydsl.dto.MemberTeamDto;
 import com.brunosong.querydsl.entity.Member;
 import com.brunosong.querydsl.entity.Team;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -83,5 +85,21 @@ class MemberJpaRepositoryTest {
         assertThat(brunosongNames).containsExactly(member);
 
     }
+
+
+    @Test
+    public void searchTest() {
+
+        MemberSearchCondition condition = new MemberSearchCondition();
+        condition.setAgeGoe(35);
+        condition.setAgeLoe(40);
+        condition.setTeamName("teamB");
+
+        List<MemberTeamDto> result = repository.searchByBuilder(condition);
+
+        assertThat(result).extracting("username").containsExactly("member4");
+
+    }
+
 
 }
