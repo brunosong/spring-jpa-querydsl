@@ -12,9 +12,13 @@ import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.assertj.core.api.Assertions;
+import org.hibernate.dialect.function.StandardSQLFunction;
+import org.hibernate.dialect.function.VarArgsSQLFunction;
+import org.hibernate.type.StandardBasicTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -317,6 +321,60 @@ public class QuerydslMiddleTest {
 
     }
 
+
+    @Test
+    public void sqlFunction() {
+
+        // 함수는 H2 Sql Dialect 에 정해진 함수만 호출할수 있다.
+        // H2Dialect.class 에 정의 되어 있다.
+        // String Functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        // registerFunction( "ascii", new StandardSQLFunction( "ascii", StandardBasicTypes.INTEGER ) );
+        // registerFunction( "char", new StandardSQLFunction( "char", StandardBasicTypes.CHARACTER ) );
+        // registerFunction( "concat", new VarArgsSQLFunction( StandardBasicTypes.STRING, "(", "||", ")" ) );
+        // registerFunction( "difference", new StandardSQLFunction( "difference", StandardBasicTypes.INTEGER ) );
+        // registerFunction( "hextoraw", new StandardSQLFunction( "hextoraw", StandardBasicTypes.STRING ) );
+        // registerFunction( "insert", new StandardSQLFunction( "lower", StandardBasicTypes.STRING ) );
+        // registerFunction( "left", new StandardSQLFunction( "left", StandardBasicTypes.STRING ) );
+        // registerFunction( "lcase", new StandardSQLFunction( "lcase", StandardBasicTypes.STRING ) );
+        // registerFunction( "ltrim", new StandardSQLFunction( "ltrim", StandardBasicTypes.STRING ) );
+        // registerFunction( "octet_length", new StandardSQLFunction( "octet_length", StandardBasicTypes.INTEGER ) );
+        // registerFunction( "position", new StandardSQLFunction( "position", StandardBasicTypes.INTEGER ) );
+        // registerFunction( "rawtohex", new StandardSQLFunction( "rawtohex", StandardBasicTypes.STRING ) );
+        // registerFunction( "repeat", new StandardSQLFunction( "repeat", StandardBasicTypes.STRING ) );
+        // registerFunction( "replace", new StandardSQLFunction( "replace", StandardBasicTypes.STRING ) );
+
+        // 추가로 함수를 쓰고 싶다면 상속을 받아서 처리 하는 방법이 있다. 설정을 해서 쓰는것이다.
+        List<String> result = jPAQueryFactory
+                .select(Expressions.stringTemplate(
+                        "function('replace', {0}, {1}, {2})"
+                        , member.username, "member", "M"))
+                .from(member)
+                .fetch();
+
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+
+    }
+
+    @Test
+    public void sqlFunction2() {
+
+        List<String> fetch = jPAQueryFactory
+                .select(member.username)
+                .from(member)
+                .where(member.username.eq( Expressions.stringTemplate(
+                        "function('lower' , {0} )", member.username)
+                )).fetch();
+
+        /* 공통적으로 안시 표준에 있는 함수는 기본적으로 다 제공이 된다. 많은 것들을 내장하고 있다. */
+        List<String> fetch2 = jPAQueryFactory
+                .select(member.username)
+                .from(member)
+                .where(member.username.eq(member.username.lower()))
+                .fetch();
+
+    }
 
 
 
