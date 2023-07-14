@@ -8,6 +8,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
@@ -82,6 +84,47 @@ class MemberRepositoryTest {
         assertThat(result).extracting("username").containsExactly("member4");
 
     }
+
+
+    @Test
+    void search_page_simple_test() {
+
+        MemberSearchCondition condition = new MemberSearchCondition();
+        PageRequest pageRequest = PageRequest.of(0, 3);
+
+        Page<MemberTeamDto> memberPage = repository.searchPageSimple(condition, pageRequest);
+
+        assertThat(memberPage.getSize()).isEqualTo(3);
+        assertThat(memberPage.getTotalPages()).isEqualTo(2);
+        assertThat(memberPage.getContent()).extracting("username")
+                .containsExactly("member1","member2","member3");
+
+        pageRequest = PageRequest.of(1, 3);
+
+        Page<MemberTeamDto> memberPage2 = repository.searchPageSimple(condition, pageRequest);
+        assertThat(memberPage2.getContent().size()).isEqualTo(1);
+        assertThat(memberPage2.getContent()).extracting("username")
+                .containsExactly("member4");
+
+    }
+
+
+    @Test
+    void search_page_complex_test() {
+
+        MemberSearchCondition condition = new MemberSearchCondition();
+        PageRequest pageRequest = PageRequest.of(0, 3);
+
+        Page<MemberTeamDto> memberPage = repository.searchPageSimple(condition, pageRequest);
+
+        assertThat(memberPage.getSize()).isEqualTo(3);
+        assertThat(memberPage.getTotalPages()).isEqualTo(2);
+        assertThat(memberPage.getContent()).extracting("username")
+                .containsExactly("member1","member2","member3");
+
+
+    }
+
 
 
 }
