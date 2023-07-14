@@ -115,7 +115,7 @@ class MemberRepositoryTest {
         MemberSearchCondition condition = new MemberSearchCondition();
         PageRequest pageRequest = PageRequest.of(0, 3);
 
-        Page<MemberTeamDto> memberPage = repository.searchPageSimple(condition, pageRequest);
+        Page<MemberTeamDto> memberPage = repository.searchPageComplex(condition, pageRequest);
 
         assertThat(memberPage.getSize()).isEqualTo(3);
         assertThat(memberPage.getTotalPages()).isEqualTo(2);

@@ -110,7 +110,8 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
                         teamNameEq(condition.getTeamName()),
                         ageGoe(condition.getAgeGoe()),
                         ageLoe(condition.getAgeLoe()))
-                .fetch().size();
+                //.fetch().size();   디플리케이트 되어가지고 이방식으로 쓰라는데... 허허 이게 효율성이 있나...
+                .fetchCount();
 
         return new PageImpl<>(content, pageable, total);
 
